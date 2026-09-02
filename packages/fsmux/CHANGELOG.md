@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/Viren070/fsmux/compare/fsmux-v0.2.0...fsmux-v0.3.0) (2026-09-02)
+
+
+### Features
+
+* **fsmux:** zero-copy READ replies with a pooled-buffer release contract ([38d82bb](https://github.com/Viren070/fsmux/commit/38d82bb741c78306ffa75ee33481343b546e2ccd))
+
 ## [0.2.0](https://github.com/Viren070/fsmux/compare/fsmux-v0.1.0...fsmux-v0.2.0) (2026-09-02)
 
 
