@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.3](https://github.com/Viren070/fsmux/compare/fsmux-fuse-v0.2.2...fsmux-fuse-v0.2.3) (2026-09-02)
+
+
+### Bug Fixes
+
+* **fsmux-fuse:** pin the prebuild glibc floor instead of inferring it ([35f2fe6](https://github.com/Viren070/fsmux/commit/35f2fe6188c2e2222fcd543d02c131703ca1d64e))
+
 ## [0.2.2](https://github.com/Viren070/fsmux/compare/fsmux-fuse-v0.2.1...fsmux-fuse-v0.2.2) (2026-09-02)
 
 
