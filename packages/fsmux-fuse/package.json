@@ -46,7 +46,7 @@
     "dev": "tsc -w --preserveWatchOutput",
     "test": "tsx --test --test-force-exit \"src/**/*.test.ts\"",
     "test:watch": "tsx --test --watch \"src/**/*.test.ts\"",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "tsc"
   },
   "dependencies": {
     "@viren070/fsmux": "workspace:^"
