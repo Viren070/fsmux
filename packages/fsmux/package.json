@@ -1,6 +1,6 @@
 {
   "name": "@viren070/fsmux",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Serve one filesystem over NFSv4 and WebDAV. Implement six methods, get two protocols.",
   "keywords": [
     "nfs",
