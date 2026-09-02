@@ -98,10 +98,8 @@ jobs:
       - name: Build the addons
         run: |
           cd packages/fsmux-fuse
-          for t in x86_64-unknown-linux-gnu aarch64-unknown-linux-gnu; do
-            FUSE_NATIVE_REQUIRED=1 node build-native.mjs --target "$t" --use-napi-cross
-          done
-          for t in x86_64-unknown-linux-musl aarch64-unknown-linux-musl; do
+          for t in x86_64-unknown-linux-gnu aarch64-unknown-linux-gnu \
+                   x86_64-unknown-linux-musl aarch64-unknown-linux-musl; do
             FUSE_NATIVE_REQUIRED=1 node build-native.mjs --target "$t" --cross-compile
           done
 

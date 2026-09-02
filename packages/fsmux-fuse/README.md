@@ -10,9 +10,10 @@ filesystem logic stays in TypeScript and the native layer is a thin relay.
 
 Prebuilt binaries ship in the package, so installing it needs no Rust
 toolchain: `linux-x64-gnu`, `linux-arm64-gnu`, `linux-x64-musl` and
-`linux-arm64-musl`. The glibc builds are compiled against **glibc 2.17**, so
-they load on anything from CentOS 7 / Debian 8 / Ubuntu 14.04 onwards rather
-than only on distributions as new as the machine that built them.
+`linux-arm64-musl`. The glibc builds are linked with zig against **glibc
+2.30**, so they load on anything from Debian 10 / Ubuntu 20.04 / RHEL 8
+onwards rather than only on distributions as new as the machine that built
+them.
 
 ```sh
 pnpm add fsmux-fuse   # npm install / yarn add work too
