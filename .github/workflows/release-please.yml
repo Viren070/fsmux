@@ -4,6 +4,16 @@ on:
   push:
     branches:
       - main
+  # Lets a publish that failed after the release was cut be retried without
+  # cutting another one.
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Which package to publish
+        required: true
+        type: choice
+        options: [fsmux, fsmux-fuse, both]
+        default: both
 
 permissions:
   contents: write
@@ -14,6 +24,7 @@ permissions:
 
 jobs:
   release-please:
+    if: ${{ github.event_name == 'push' }}
     runs-on: ubuntu-latest
     outputs:
       fsmux: ${{ steps.release.outputs['packages/fsmux--release_created'] }}
@@ -27,8 +38,8 @@ jobs:
 
   # fsmux is plain TypeScript, so nothing platform-specific is needed.
   publish-fsmux:
-    needs: release-please
-    if: ${{ needs.release-please.outputs.fsmux == 'true' }}
+    needs: [release-please]
+    if: ${{ !cancelled() && (needs.release-please.outputs.fsmux == 'true' || (github.event_name == 'workflow_dispatch' && inputs.publish != 'fsmux-fuse')) }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -55,8 +66,8 @@ jobs:
   # are small enough that per-platform packages would be more machinery than
   # they are worth, and `nativeTarget()` picks the right one at runtime.
   publish-fsmux-fuse:
-    needs: release-please
-    if: ${{ needs.release-please.outputs.fuse == 'true' }}
+    needs: [release-please]
+    if: ${{ !cancelled() && (needs.release-please.outputs.fuse == 'true' || (github.event_name == 'workflow_dispatch' && inputs.publish != 'fsmux')) }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -79,13 +90,14 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build (x86_64)
-        run: FUSE_NATIVE_REQUIRED=1 pnpm -F @viren070/fsmux-fuse build
+      - name: Build the workspace and the x86_64 addon
+        run: FUSE_NATIVE_REQUIRED=1 pnpm build
 
       - name: Build (aarch64)
         env:
           CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
-        run: FUSE_NATIVE_REQUIRED=1 pnpm -F @viren070/fsmux-fuse build:native --target aarch64-unknown-linux-gnu
+        run: |
+          FUSE_NATIVE_REQUIRED=1 pnpm -F @viren070/fsmux-fuse exec             node build-native.mjs --target aarch64-unknown-linux-gnu
 
       - name: Show what will ship
         run: ls -la packages/fsmux-fuse/native
