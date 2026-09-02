@@ -1,6 +1,6 @@
 {
   "name": "@viren070/fsmux-fuse",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Mount an fsmux filesystem locally through FUSE (Linux; Rust via napi-rs)",
   "keywords": [
     "fuse",
