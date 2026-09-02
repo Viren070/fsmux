@@ -7,6 +7,7 @@ import {
   type FsNode,
   type SharedFilesystem,
 } from '@viren070/fsmux';
+import { releaseBuffer } from '@viren070/fsmux';
 import { silentLogger, type Logger } from './logger.js';
 import { kindOf, toFuseAttr, KIND_DIR, type AttrOptions } from './attrs.js';
 import { loadNativeBinding, type NativeBinding } from './binding.js';
@@ -339,6 +340,8 @@ class Session {
         if (!open) throw new FuseErrno(EBADF);
         const data = await open.handle.read(req.offset ?? 0, req.size ?? 0);
         n.replyData(req.id, data);
+        // The reply copied the bytes out synchronously.
+        releaseBuffer(data);
         return;
       }
       case 'release': {
