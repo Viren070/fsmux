@@ -125,7 +125,7 @@ export class NfsServer {
     });
   }
 
-  private async call(call: RpcCall, peer: RpcPeer): Promise<Buffer> {
+  private async call(call: RpcCall, peer: RpcPeer): Promise<Buffer | Buffer[]> {
     switch (call.proc) {
       case NFSPROC4_NULL:
         return Buffer.alloc(0);

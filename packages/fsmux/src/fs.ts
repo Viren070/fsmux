@@ -51,6 +51,11 @@ export interface FsOpenedStream {
 export interface FsFileHandle {
   /** Bytes at `[offset, offset + length)`, shorter only at end of file. */
   read(offset: number, length: number): Promise<Buffer>;
+  /**
+   * Like {@link read}, but may return the range as several views to spare a
+   * join; each part may carry a release hook (see release.ts).
+   */
+  readv?(offset: number, length: number): Promise<Buffer[]>;
   close(): Promise<void>;
 }
 

@@ -1,3 +1,5 @@
+import { releaseBuffer } from './release.js';
+
 /** XDR (RFC 4506): big-endian, every item padded to a multiple of four. */
 export class XdrError extends Error {
   constructor(message: string) {
@@ -13,13 +15,23 @@ function padded(length: number): number {
 export class XdrWriter {
   private buf: Buffer;
   private len = 0;
+  /** Payloads spliced in without copying, keyed by own-buffer offset. */
+  private externals: { at: number; bytes: Uint8Array }[] = [];
 
   constructor(initialSize = 256) {
     this.buf = Buffer.allocUnsafe(initialSize);
   }
 
+  /** Own-buffer length; `patchUint32`/`truncate` offsets live in this space. */
   get length(): number {
     return this.len;
+  }
+
+  /** Encoded length including spliced externals. */
+  get totalLength(): number {
+    let total = this.len;
+    for (const e of this.externals) total += e.bytes.length;
+    return total;
   }
 
   private ensure(extra: number): void {
@@ -80,6 +92,44 @@ export class XdrWriter {
     return this.opaqueFixed(bytes);
   }
 
+  /**
+   * Variable-length opaque whose payload is spliced into {@link segments}
+   * rather than copied; the caller must not mutate it until the record is
+   * written and released. Small payloads are cheaper to copy inline; those
+   * are consumed (released) immediately.
+   */
+  opaqueVarExternal(bytes: Uint8Array): this {
+    return this.opaqueVarExternalParts([bytes]);
+  }
+
+  /** The same, assembled from several payload views without joining them. */
+  opaqueVarExternalParts(parts: Uint8Array[]): this {
+    let total = 0;
+    for (const p of parts) total += p.length;
+    this.uint32(total);
+    if (total < 4096) {
+      for (const p of parts) {
+        this.raw(p);
+        releaseBuffer(p);
+      }
+    } else {
+      for (const p of parts) {
+        if (p.length === 0) {
+          releaseBuffer(p);
+          continue;
+        }
+        this.externals.push({ at: this.len, bytes: p });
+      }
+    }
+    const pad = padded(total) - total;
+    if (pad) {
+      this.ensure(pad);
+      this.buf.fill(0, this.len, this.len + pad);
+      this.len += pad;
+    }
+    return this;
+  }
+
   string(value: string): this {
     return this.opaqueVar(Buffer.from(value, 'utf8'));
   }
@@ -97,18 +147,49 @@ export class XdrWriter {
     this.buf.writeUInt32BE(value >>> 0, offset);
   }
 
-  /** Discard everything written after `length`. */
+  /** Discard everything written after `length`, spliced externals included. */
   truncate(length: number): void {
     if (length < this.len) this.len = length;
+    this.externals = this.externals.filter((e) => {
+      if (e.at < length) return true;
+      releaseBuffer(e.bytes);
+      return false;
+    });
   }
 
   /** A view of what was written; invalidated by further writes. */
   bytes(): Buffer {
+    if (this.externals.length > 0) {
+      throw new XdrError('writer holds external segments; use segments()');
+    }
     return this.buf.subarray(0, this.len);
   }
 
+  /**
+   * The encoded record as views interleaving own bytes and spliced externals,
+   * in order. Invalidated by further writes.
+   */
+  segments(): Buffer[] {
+    if (this.externals.length === 0) return [this.buf.subarray(0, this.len)];
+    const out: Buffer[] = [];
+    let from = 0;
+    for (const e of this.externals) {
+      if (e.at > from) out.push(this.buf.subarray(from, e.at));
+      out.push(
+        Buffer.isBuffer(e.bytes)
+          ? e.bytes
+          : Buffer.from(e.bytes.buffer, e.bytes.byteOffset, e.bytes.byteLength),
+      );
+      from = e.at;
+    }
+    if (this.len > from) out.push(this.buf.subarray(from, this.len));
+    return out;
+  }
+
   toBuffer(): Buffer {
-    return Buffer.from(this.bytes());
+    return this.externals.length > 0
+      ? Buffer.concat(this.segments())
+      : Buffer.from(this.buf.subarray(0, this.len));
   }
 }
 
