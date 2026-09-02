@@ -1,4 +1,5 @@
 export * from './fs.js';
+export * from './release.js';
 export * from './logger.js';
 export * from './xdr.js';
 export * from './rpc.js';

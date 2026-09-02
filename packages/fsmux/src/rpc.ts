@@ -1,5 +1,6 @@
 import net from 'node:net';
 import type { AddressInfo } from 'node:net';
+import { releaseBuffer } from './release.js';
 import { XdrError, XdrReader, XdrWriter } from './xdr.js';
 import { silentLogger, type Logger } from './logger.js';
 
@@ -167,6 +168,23 @@ export function frameRecord(payload: Uint8Array): Buffer {
   return Buffer.concat([header, payload]);
 }
 
+/** One record written as scattered parts, so payloads are never joined. */
+function writeRecord(socket: net.Socket, parts: Buffer[]): void {
+  let total = 0;
+  for (const p of parts) total += p.length;
+  const header = Buffer.allocUnsafe(4);
+  header.writeUInt32BE((total | LAST_FRAGMENT) >>> 0, 0);
+  socket.cork();
+  socket.write(header);
+  for (let i = 0; i + 1 < parts.length; i++) socket.write(parts[i]);
+  // Write callbacks fire in order, so the last one means every part has been
+  // handed to the OS (or the socket died) and pooled payloads may be reused.
+  socket.write(parts[parts.length - 1], () => {
+    for (const p of parts) releaseBuffer(p);
+  });
+  socket.uncork();
+}
+
 /**
  * Reassembles records from a byte stream. Fragments of one record are joined;
  * a record larger than `maxRecord` throws, which the connection treats as
@@ -221,10 +239,11 @@ export interface RpcProgram {
   /** Inclusive version range served. */
   versions: [number, number];
   /**
-   * Results for one call, without the RPC reply header. Throw
-   * {@link RpcError} to send a specific reply instead.
+   * Results for one call, without the RPC reply header, as one buffer or as
+   * segments written to the socket without joining. Throw {@link RpcError}
+   * to send a specific reply instead.
    */
-  call(call: RpcCall, peer: RpcPeer): Promise<Buffer>;
+  call(call: RpcCall, peer: RpcPeer): Promise<Buffer | Buffer[]>;
 }
 
 export interface RpcServerOptions {
@@ -293,7 +312,12 @@ export class RpcServer {
         if (inflight >= maxInflight) socket.pause();
         void this.dispatch(record, peer)
           .then((reply) => {
-            if (!socket.destroyed) socket.write(frameRecord(reply));
+            const parts = Array.isArray(reply) ? reply : [reply];
+            if (socket.destroyed) {
+              for (const p of parts) releaseBuffer(p);
+              return;
+            }
+            writeRecord(socket, parts);
           })
           .finally(() => {
             inflight--;
@@ -320,7 +344,10 @@ export class RpcServer {
     socket.on('close', () => this.sockets.delete(socket));
   }
 
-  private async dispatch(record: Buffer, peer: RpcPeer): Promise<Buffer> {
+  private async dispatch(
+    record: Buffer,
+    peer: RpcPeer,
+  ): Promise<Buffer | Buffer[]> {
     let call: RpcCall;
     try {
       call = parseCall(record);
@@ -345,9 +372,8 @@ export class RpcServer {
     }
     try {
       const results = await program.call(call, peer);
-      const w = beginAcceptedReply(call.xid);
-      w.raw(results);
-      return w.toBuffer();
+      const header = beginAcceptedReply(call.xid).toBuffer();
+      return Array.isArray(results) ? [header, ...results] : [header, results];
     } catch (err) {
       if (err instanceof RpcError) return err.reply;
       if (err instanceof XdrError) {

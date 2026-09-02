@@ -333,10 +333,16 @@ const OPS: Record<number, OpHandler> = {
     const handle = await handleFor(ctx, stateidReader, node);
     const length = Math.min(count, ctx.env.info.maxRead);
     const at = Number(offset);
-    const data =
-      at >= node.size ? Buffer.alloc(0) : await handle.read(at, length);
-    const eof = at + data.length >= node.size || data.length < length;
-    ctx.out.bool(eof).opaqueVar(data);
+    const parts =
+      at >= node.size
+        ? []
+        : handle.readv
+          ? await handle.readv(at, length)
+          : [await handle.read(at, length)];
+    let got = 0;
+    for (const p of parts) got += p.length;
+    const eof = at + got >= node.size || got < length;
+    ctx.out.bool(eof).opaqueVarExternalParts(parts);
   },
 
   [OP.OPEN]: async (ctx) => {
@@ -521,7 +527,7 @@ export async function compound(
   args: XdrReader,
   env: CompoundEnv,
   peer: RpcPeer,
-): Promise<Buffer> {
+): Promise<Buffer[]> {
   const tag = args.opaqueVar(MAX_TAG);
   const minor = args.uint32();
   const count = args.uint32();
@@ -534,7 +540,7 @@ export async function compound(
 
   if (minor !== 0) {
     out.patchUint32(0, NFS4ERR.MINOR_VERS_MISMATCH);
-    return out.toBuffer();
+    return out.segments();
   }
 
   const state: CompoundState = {};
@@ -571,7 +577,7 @@ export async function compound(
   }
   out.patchUint32(0, status);
   out.patchUint32(countAt, produced);
-  return out.toBuffer();
+  return out.segments();
 }
 
 export type { FsFileHandle };
