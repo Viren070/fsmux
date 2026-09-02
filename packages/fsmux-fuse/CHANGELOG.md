@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.2](https://github.com/Viren070/fsmux/compare/fsmux-fuse-v0.2.1...fsmux-fuse-v0.2.2) (2026-09-02)
+
+
+### Bug Fixes
+
+* **fsmux-fuse:** link every target with zig so the x64 glibc floor holds ([8f981b1](https://github.com/Viren070/fsmux/commit/8f981b151bcf675ec0f1177f51e9f4a26c75e1ee))
+
 ## [0.2.1](https://github.com/Viren070/fsmux/compare/fsmux-fuse-v0.2.0...fsmux-fuse-v0.2.1) (2026-09-02)
 
 
