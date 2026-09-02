@@ -1,0 +1,26 @@
+[package]
+name = "fsmux-fuse"
+version = "0.1.0"
+edition = "2024"
+publish = false
+license = "MIT"
+description = "Node-API binding that mounts a JavaScript-backed filesystem through FUSE"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+# No libfuse: mounts through mount(2) as root, fusermount3 otherwise.
+fuser = { version = "0.18", default-features = false }
+libc = "0.2"
+napi = { version = "3", features = ["napi9"] }
+napi-derive = "3"
+nix = { version = "0.31", features = ["mount"] }
+
+[build-dependencies]
+napi-build = "2"
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = "symbols"

@@ -1,0 +1,94 @@
+name: Release Please
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+  # Trusted publishing to npm: the workflow proves its identity with an OIDC
+  # token instead of a long-lived NPM_TOKEN.
+  id-token: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    outputs:
+      fsmux: ${{ steps.release.outputs['packages/fsmux--release_created'] }}
+      fuse: ${{ steps.release.outputs['packages/fsmux-fuse--release_created'] }}
+    steps:
+      - uses: googleapis/release-please-action@v4
+        id: release
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+  # fsmux is plain TypeScript, so nothing platform-specific is needed.
+  publish-fsmux:
+    needs: release-please
+    if: ${{ needs.release-please.outputs.fsmux == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install corepack
+        run: corepack enable
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm -F @viren070/fsmux build
+
+      - name: Publish to npm
+        run: pnpm -F @viren070/fsmux publish --access public --no-git-checks
+
+  # fsmux-fuse ships prebuilt binaries so consumers never need a Rust
+  # toolchain. Both Linux targets go in the one tarball: two stripped cdylibs
+  # are small enough that per-platform packages would be more machinery than
+  # they are worth, and `nativeTarget()` picks the right one at runtime.
+  publish-fsmux-fuse:
+    needs: release-please
+    if: ${{ needs.release-please.outputs.fuse == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install corepack
+        run: corepack enable
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          registry-url: 'https://registry.npmjs.org'
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-unknown-linux-gnu,aarch64-unknown-linux-gnu
+
+      - name: Install the aarch64 cross linker
+        run: sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build (x86_64)
+        run: FUSE_NATIVE_REQUIRED=1 pnpm -F @viren070/fsmux-fuse build
+
+      - name: Build (aarch64)
+        env:
+          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
+        run: FUSE_NATIVE_REQUIRED=1 pnpm -F @viren070/fsmux-fuse build:native --target aarch64-unknown-linux-gnu
+
+      - name: Show what will ship
+        run: ls -la packages/fsmux-fuse/native
+
+      - name: Publish to npm
+        run: pnpm -F @viren070/fsmux-fuse publish --access public --no-git-checks

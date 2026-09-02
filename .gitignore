@@ -1,0 +1,8 @@
+node_modules/
+dist/
+*.tsbuildinfo
+packages/fsmux-fuse/native/
+packages/fsmux-fuse/crate/target/
+npm/
+*.node
+.DS_Store

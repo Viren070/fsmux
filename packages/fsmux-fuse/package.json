@@ -1,0 +1,58 @@
+{
+  "name": "@viren070/fsmux-fuse",
+  "version": "0.1.0",
+  "description": "Mount an fsmux filesystem locally through FUSE (Linux; Rust via napi-rs)",
+  "keywords": [
+    "fuse",
+    "mount",
+    "filesystem",
+    "fsmux",
+    "napi"
+  ],
+  "license": "MIT",
+  "author": "Viren070",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Viren070/fsmux.git",
+    "directory": "packages/fsmux-fuse"
+  },
+  "homepage": "https://github.com/Viren070/fsmux/tree/main/packages/fsmux-fuse#readme",
+  "bugs": {
+    "url": "https://github.com/Viren070/fsmux/issues"
+  },
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "native"
+  ],
+  "engines": {
+    "node": ">=24.0.0",
+    "pnpm": ">=11.0.0"
+  },
+  "napi": {
+    "binaryName": "fsmux-fuse",
+    "targets": [
+      "x86_64-unknown-linux-gnu",
+      "aarch64-unknown-linux-gnu"
+    ]
+  },
+  "scripts": {
+    "build": "tsc && node build-native.mjs",
+    "build:native": "node build-native.mjs",
+    "dev": "tsc -w --preserveWatchOutput",
+    "test": "tsx --test --test-force-exit \"src/**/*.test.ts\"",
+    "test:watch": "tsx --test --watch \"src/**/*.test.ts\"",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@viren070/fsmux": "workspace:^"
+  },
+  "devDependencies": {
+    "@napi-rs/cli": "^3.8.6",
+    "@types/node": "^24.13.3",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
+  }
+}

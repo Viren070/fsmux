@@ -1,0 +1,57 @@
+{
+  "name": "@viren070/fsmux",
+  "version": "0.1.0",
+  "description": "Serve one filesystem over NFSv4 and WebDAV. Implement six methods, get two protocols.",
+  "keywords": [
+    "nfs",
+    "nfsv4",
+    "webdav",
+    "filesystem",
+    "fuse",
+    "share",
+    "server"
+  ],
+  "license": "MIT",
+  "author": "Viren070",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Viren070/fsmux.git",
+    "directory": "packages/fsmux"
+  },
+  "homepage": "https://github.com/Viren070/fsmux#readme",
+  "bugs": {
+    "url": "https://github.com/Viren070/fsmux/issues"
+  },
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=24.0.0",
+    "pnpm": ">=11.0.0"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./testing": {
+      "types": "./dist/testing/index.d.ts",
+      "default": "./dist/testing/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc -w --preserveWatchOutput",
+    "test": "tsx --test --test-force-exit \"src/**/*.test.ts\"",
+    "test:watch": "tsx --test --watch \"src/**/*.test.ts\"",
+    "prepublishOnly": "npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.3",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
+  }
+}

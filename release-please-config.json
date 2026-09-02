@@ -1,0 +1,16 @@
+{
+  "bump-minor-pre-major": true,
+  "plugins": [
+    "node-workspace"
+  ],
+  "packages": {
+    "packages/fsmux": {
+      "release-type": "node",
+      "pull-request-title-pattern": "chore: release ${version}"
+    },
+    "packages/fsmux-fuse": {
+      "release-type": "node",
+      "pull-request-title-pattern": "chore: release ${version}"
+    }
+  }
+}
