@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.4](https://github.com/Viren070/fsmux/compare/fsmux-fuse-v0.2.3...fsmux-fuse-v0.2.4) (2026-09-02)
+
+
+### Bug Fixes
+
+* **fsmux-fuse:** stop the publish step overwriting the cross-built addon ([7fa4e88](https://github.com/Viren070/fsmux/commit/7fa4e88cb8bbce9c15b7829f89817721b255fc15))
+
 ## [0.2.3](https://github.com/Viren070/fsmux/compare/fsmux-fuse-v0.2.2...fsmux-fuse-v0.2.3) (2026-09-02)
 
 
