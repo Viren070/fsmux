@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.3.0](https://github.com/Viren070/fsmux/compare/fsmux-fuse-v0.2.4...fsmux-fuse-v0.3.0) (2026-09-02)
+
+
+### Features
+
+* **fsmux-fuse:** release pooled read buffers after the synchronous reply ([c6067ad](https://github.com/Viren070/fsmux/commit/c6067ad2dbb58c390c2e92ecdaa4d804d291f66e))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @viren070/fsmux bumped to 0.3.0
+
 ## [0.2.4](https://github.com/Viren070/fsmux/compare/fsmux-fuse-v0.2.3...fsmux-fuse-v0.2.4) (2026-09-02)
 
 
